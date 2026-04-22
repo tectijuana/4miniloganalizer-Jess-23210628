@@ -35,12 +35,14 @@ TODO (extensión para estudiantes):
     .align 4
 buffer:         .skip 4096
 num_buf:        .skip 32      // Buffer para imprimir enteros en texto
+codigo_frec:    .skip 8       // Almacena el código más frecuente y su frecuencia
 
 .section .data
 msg_titulo:         .asciz "=== Mini Cloud Log Analyzer ===\n"
 msg_2xx:            .asciz "Éxitos 2xx: "
 msg_4xx:            .asciz "Errores 4xx: "
 msg_5xx:            .asciz "Errores 5xx: "
+msg_codigo_frec:    .asciz "Código más frecuente: "
 msg_fin_linea:      .asciz "\n"
 
 .section .text
@@ -55,6 +57,10 @@ _start:
     // Estado del parser
     mov x22, #0                  // numero_actual
     mov x23, #0                  // tiene_digitos (0/1)
+
+    // Inicializar almacenamiento de código más frecuente
+    mov x26, #0                  // código más frecuente
+    mov x27, #0                  // frecuencia del código más frecuente
 
 leer_bloque:
     // read(STDIN_FD, buffer, 4096)
@@ -107,6 +113,7 @@ fin_numero:
 
     mov x0, x22
     bl clasificar_codigo
+    bl actualizar_frecuencia
 
 reiniciar_numero:
     mov x22, #0
@@ -118,6 +125,7 @@ fin_lectura:
     cbz x23, imprimir_reporte
     mov x0, x22
     bl clasificar_codigo
+    bl actualizar_frecuencia
 
 imprimir_reporte:
     // Encabezado
@@ -150,6 +158,16 @@ imprimir_reporte:
     add x0, x0, :lo12:msg_5xx
     bl write_cstr
     mov x0, x21
+    bl print_uint
+    adrp x0, msg_fin_linea
+    add x0, x0, :lo12:msg_fin_linea
+    bl write_cstr
+
+    // Mostrar código más frecuente
+    adrp x0, msg_codigo_frec
+    add x0, x0, :lo12:msg_codigo_frec
+    bl write_cstr
+    ldr x0, codigo_frec
     bl print_uint
     adrp x0, msg_fin_linea
     add x0, x0, :lo12:msg_fin_linea
@@ -193,6 +211,71 @@ revisar_5xx:
     add x21, x21, #1
 
 clasificar_fin:
+    ret
+
+// -----------------------------------------------------------------------------
+// actualizar_frecuencia(x0 = codigo_http)
+// Determina el código de estado más frecuente.
+// -----------------------------------------------------------------------------
+actualizar_frecuencia:
+    stp x29, x30, [sp, #-16]!   // guardar frame pointer y link register
+    mov x29, sp
+    
+    // x0 contiene el código HTTP actual
+    // x27 frecuencia actual del código más frecuente
+    // x26 código más frecuente actual
+    
+    // Verificar si ya tenemos registros de este código
+    ldr x28, =codigo_frec
+    ldr x9, [x28]               // cargar el código almacenado
+    ldr x10, [x28, #8]          // cargar la frecuencia almacenada
+    
+    cmp x9, x0
+    b.ne no_es_mismo_codigo
+    
+    // Es el mismo código, incrementar su frecuencia
+    add x10, x10, #1
+    str x10, [x28, #8]
+    
+    // Comparar con el código más frecuente global
+    cmp x10, x27
+    b.lt mantener_actual
+    
+    // Este código ahora es el más frecuente o empata
+    mov x27, x10               // nueva frecuencia máxima
+    mov x26, x0                // nuevo código más frecuente
+    b guardar_maximo
+    
+no_es_mismo_codigo:
+    // Diferente código, verificar si tenemos que crear nuevo registro
+    cmp x9, #0
+    b.ne codigo_existente
+    
+    // Crear nuevo registro
+    str x0, [x28]
+    mov x10, #1
+    str x10, [x28, #8]
+    
+    // Comparar con el código más frecuente global
+    cmp x10, x27
+    b.lt mantener_actual
+    mov x27, x10
+    mov x26, x0
+    
+codigo_existente:
+    // Aquí se podría implementar un arreglo de códigos
+    // Por simplicidad, solo se mantiene el más frecuente
+    b mantener_actual
+
+guardar_maximo:
+    // Guardar el código más frecuente y su frecuencia
+    adrp x9, codigo_frec
+    add x9, x9, :lo12:codigo_frec
+    str x26, [x9]              // guardar código más frecuente
+    str x27, [x9, #8]          // guardar frecuencia
+
+mantener_actual:
+    ldp x29, x30, [sp], #16    // restaurar frame pointer y link register
     ret
 
 // -----------------------------------------------------------------------------
