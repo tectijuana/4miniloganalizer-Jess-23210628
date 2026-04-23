@@ -1,6 +1,12 @@
 <img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/a44bb0d7-30f9-4fff-95bf-f08277476255" />
 
-
+## Información General
+- **Nombre del estudiante:*MENDOZA SALGADO JESSICA*  
+- **Grupo / Materia:*26B 4PM*  
+- **Docente:*RENE SOLIS REYES *  
+- **Fecha de entrega:*23/04/2026*  
+- **Arquitectura:** Implementación de un Mini Cloud Log Analyzer en Bash Script + Assmblr 
+- **Sistema operativo:** ARM64 LINUX
 # Mini Cloud Log Analyzer (Bash + ARM64 + GNU Make)
 
 Práctica universitaria orientada a estudiantes principiantes para reforzar fundamentos de:
