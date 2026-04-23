@@ -31,41 +31,41 @@ expected_output() {
     logs_A.txt)
       cat <<'TXT'
 === Mini Cloud Log Analyzer ===
-Éxitos 2xx: 4
-Errores 4xx: 3
-Errores 5xx: 3
+Éxitos 2xx: 6
+Errores 4xx: 2
+Errores 5xx: 2
 TXT
       ;;
     logs_B.txt)
       cat <<'TXT'
 === Mini Cloud Log Analyzer ===
 Éxitos 2xx: 2
-Errores 4xx: 5
-Errores 5xx: 3
+Errores 4xx: 3
+Errores 5xx: 5
 TXT
       ;;
     logs_C.txt)
       cat <<'TXT'
 === Mini Cloud Log Analyzer ===
-Éxitos 2xx: 4
-Errores 4xx: 1
-Errores 5xx: 3
+Éxitos 2xx: 0
+Errores 4xx: 10
+Errores 5xx: 0
 TXT
       ;;
     logs_D.txt)
       cat <<'TXT'
 === Mini Cloud Log Analyzer ===
-Éxitos 2xx: 3
-Errores 4xx: 4
-Errores 5xx: 2
+Éxitos 2xx: 4
+Errores 4xx: 3
+Errores 5xx: 3
 TXT
       ;;
     logs_E.txt)
       cat <<'TXT'
 === Mini Cloud Log Analyzer ===
-Éxitos 2xx: 7
-Errores 4xx: 2
-Errores 5xx: 2
+Éxitos 2xx: 0
+Errores 4xx: 0
+Errores 5xx: 10
 TXT
       ;;
     *)
