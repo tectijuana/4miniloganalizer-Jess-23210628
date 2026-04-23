@@ -7,6 +7,8 @@
 - **Fecha de entrega:*23/04/2026*  
 - **Arquitectura:** Implementación de un Mini Cloud Log Analyzer en Bash Script + Assmblr 
 - **Sistema operativo:** ARM64 LINUX
+  ## Asciinema
+https://asciinema.org/a/Oy7hsLjPuRe9GuGD
 # Mini Cloud Log Analyzer (Bash + ARM64 + GNU Make)
 
 Práctica universitaria orientada a estudiantes principiantes para reforzar fundamentos de:
@@ -16,10 +18,7 @@ Práctica universitaria orientada a estudiantes principiantes para reforzar fund
 - y flujo de trabajo con **GitHub Classroom**.
 
 ---
-## Asciinema
-https://asciinema.org/a/Oy7hsLjPuRe9GuGD
 
-# Mini Cloud Log Analyzer - ARM64 Assembly
 
 ## 📋 Descripción
 
@@ -62,8 +61,8 @@ El programa utiliza únicamente syscalls directas sin intermediarios:
 ## 🔄 Lógica de Procesamiento
 
 ### Diagrama de Flujo Principal
+
 INICIO
-│
 ├─→ Inicializar contadores en 0
 │
 └─→ │
@@ -116,11 +115,5 @@ revisar_5xx:
     b.gt fin
     add x21, x21, #1    ; error servidor
 ```
----
-###Determinación del Código Más Frecuente
-La función actualizar_frecuencia:
-=== Mini Cloud Log Analyzer ===
-Éxitos 2xx: <cantidad>
-Errores 4xx: <cantidad>
-Errores 5xx: <cantidad>
-Código más frecuente: <código>
+
+
