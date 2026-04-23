@@ -10,149 +10,119 @@ Práctica universitaria orientada a estudiantes principiantes para reforzar fund
 - y flujo de trabajo con **GitHub Classroom**.
 
 ---
+# Mini Cloud Log Analyzer - ARM64 Assembly
 
-## 1) Enunciado formal de la práctica
+## 📋 Descripción
 
-Implemente un analizador de logs de servidor en ARM64 Assembly que reciba por `stdin` una secuencia de códigos HTTP (un entero por línea), y procese la información según la variante asignada por el docente.
+Analizador de logs de servidor HTTP implementado completamente en **ARM64 Assembly**, sin usar libc ni funciones de C. El programa lee códigos de estado HTTP desde la entrada estándar (uno por línea) y genera un reporte estadístico incluyendo:
 
-La versión base proporcionada (Variante A) ya compila y ejecuta, y cuenta:
-- códigos de éxito **2xx**,
-- errores de cliente **4xx**,
-- errores de servidor **5xx**.
+- Conteo de códigos 2xx (éxitos)
+- Conteo de códigos 4xx (errores del cliente)
+- Conteo de códigos 5xx (errores del servidor)
+- **Código de estado más frecuente**
 
-Ejecución esperada:
+## 🏗️ Diseño Arquitectónico
 
-```bash
-cat logs.txt | ./analyzer
+### 1. Uso Exclusivo de Syscalls Linux
+
+El programa utiliza únicamente syscalls directas sin intermediarios:
+
+| Syscall | Número | Uso |
+|---------|--------|-----|
+| `read`  | 63     | Leer datos desde stdin |
+| `write` | 64     | Imprimir resultados |
+| `exit`  | 93     | Terminar el programa |
+
+### 2. Estructura de Memoria
+.bss (datos no inicializados)
+├── buffer[4096] - Buffer circular para lectura por bloques
+└── num_buf[32] - Buffer para conversión entero→string
+
+.data (datos inicializados)
+├── msg_titulo - "=== Mini Cloud Log Analyzer ===\n"
+├── msg_2xx - "Éxitos 2xx: "
+├── msg_4xx - "Errores 4xx: "
+├── msg_5xx - "Errores 5xx: "
+├── msg_codigo_frec - "Código más frecuente: "
+└── msg_fin_linea - "\n"
+
+
+### 3. Registros Utilizados
+
+| Registro | Propósito |
+|----------|-----------|
+| `x19` | Contador de códigos 2xx |
+| `x20` | Contador de códigos 4xx |
+| `x21` | Contador de códigos 5xx |
+| `x22` | Número actual siendo parseado |
+| `x23` | Flag: tiene_digitos (0/1) |
+| `x24` | Índice en buffer actual |
+| `x25` | Bytes leídos en bloque actual |
+| `x26` | Almacenamiento temporal / código frecuente |
+| `x27` | Frecuencia del código más frecuente |
+
+## 🔄 Lógica de Procesamiento
+
+### Diagrama de Flujo Principal
+INICIO
+│
+├─→ Inicializar contadores en 0
+│
+└─→ │
+│ read(stdin, buffer, 4096)
+│
+├─→ ¿bytes_leidos == 0? ───→ FIN_LECTURA
+│
+└─→ Procesar byte por byte
+│
+├─→ ¿byte == '\n'?
+│ └─→ Clasificar número actual
+│ ├─→ 200-299 → incrementar x19
+│ ├─→ 400-499 → incrementar x20
+│ ├─→ 500-599 → incrementar x21
+│ └─→ Actualizar código más frecuente
+│
+└─→ ¿byte es dígito?
+└─→ numero_actual = numero_actual * 10 + dígito
+
+### Parseo de Enteros por Bloque
+
+El programa implementa un parser **stateful** que:
+1. Acumula dígitos mientras encuentra caracteres numéricos
+2. Al encontrar `\n`, clasifica el código acumulado
+3. Reinicia el acumulador para el siguiente código
+
+Esto permite procesar archivos de cualquier tamaño sin cargar todo en memoria.
+
+### Clasificación de Códigos HTTP
+
+```arm64
+clasificar_codigo:
+    cmp x0, #200    ; límite inferior 2xx
+    b.lt fin
+    cmp x0, #299    ; límite superior 2xx
+    b.gt revisar_4xx
+    add x19, x19, #1    ; éxito
+    
+revisar_4xx:
+    cmp x0, #400
+    b.lt fin
+    cmp x0, #499
+    b.gt revisar_5xx
+    add x20, x20, #1    ; error cliente
+    
+revisar_5xx:
+    cmp x0, #500
+    b.lt fin
+    cmp x0, #599
+    b.gt fin
+    add x21, x21, #1    ; error servidor
 ```
-
 ---
-
-## 2) Objetivos de aprendizaje
-
-Al finalizar esta práctica, el estudiante será capaz de:
-1. Compilar y enlazar un programa ARM64 sin C ni libc.
-2. Invocar syscalls Linux (`read`, `write`, `exit`).
-3. Parsear enteros desde flujo de bytes (`stdin`).
-4. Diseñar lógica condicional para análisis de códigos HTTP.
-5. Validar resultados con scripts de prueba reproducibles.
-
----
-
-## 3) Estructura del repositorio
-
-```text
-cloud-log-analyzer/
-├── README.md
-├── Makefile
-├── run.sh
-├── src/
-│   └── analyzer.s
-├── data/
-│   ├── logs_A.txt
-│   ├── logs_B.txt
-│   ├── logs_C.txt
-│   ├── logs_D.txt
-│   └── logs_E.txt
-├── tests/
-│   ├── test.sh
-│   └── expected_outputs.txt
-└── instructor/
-    └── VARIANTES.md
-```
-
----
-
-## 4) Requisitos técnicos
-
-- Sistema objetivo: **AWS Ubuntu 24 ARM64**.
-- Arquitectura: **AArch64 Linux**.
-- Ensamblador: **GNU assembler** (o equivalente compatible para construir en entorno alterno).
-- Restricciones:
-  - Sin libc.
-  - Sin lenguaje C.
-  - Solo syscalls Linux + Bash + Make.
-
----
-
-## 5) Flujo sugerido en GitHub Classroom
-
-1. El docente crea la actividad en GitHub Classroom.
-2. Cada estudiante acepta su repositorio individual.
-3. Clona su repositorio en instancia AWS ARM64.
-4. Implementa su variante en `src/analyzer.s`.
-5. Ejecuta:
-   - `make`
-   - `make run`
-   - `make test`
-6. Hace commit/push y entrega el enlace del repositorio.
-
----
-
-## 6) Instrucciones de uso en AWS Ubuntu 24 ARM64
-
-### 6.1 Compilar
-
-```bash
-make
-```
-
-### 6.2 Ejecutar ejemplo base
-
-```bash
-make run
-```
-
-### 6.3 Ejecutar pruebas
-
-```bash
-make test
-```
-
-### 6.4 Limpiar artefactos
-
-```bash
-make clean
-```
-
----
-
-## 7) Variantes de práctica
-
-- **A**: contar 2xx, 4xx, 5xx.
-- **B**: encontrar código más frecuente.
-- **C**: detectar primer 503.
-- **D**: detectar 3 errores consecutivos.
-- **E**: calcular health score.
-
-Detalles de asignación docente: ver `instructor/VARIANTES.md`.
-
----
-
-## 8) Rúbrica propuesta
-
-Toda solución debe tener:
-1. Encabezado del programador
-2. Pseudocódigo
-3. Código ARM64 comentado
-
-| Criterio | Ponderación |
-|---|---:|
-| Correctitud funcional de la variante asignada | 40% |
-| Dominio técnico de ARM64 + syscalls | 25% |
-| Pruebas automatizadas y reproducibilidad | 20% |
-| Calidad de documentación y claridad de código | 15% |
-
-### Criterios de descuento sugeridos
-- No compila en ARM64: hasta -40%.
-- Usa C/libc: evaluación inválida por incumplir restricción.
-- Sin evidencia de pruebas: hasta -20%. Utiliar Asciinema (con su nombre y preferente), o tambien LOOM.com compartido link
-
----
-
-## 9) Notas para estudiantes
-
-- Lean y entiendan el pseudocódigo al inicio de `src/analyzer.s`.
-- Mantengan comentarios técnicos claros y breves.
-- Trabajen incrementalmente: primero parser, luego lógica de variante, luego pruebas.
-- Si trabajan en host x86_64, se recomienda emulación con `qemu-aarch64` o compilar/ejecutar directamente en AWS ARM64.
+###Determinación del Código Más Frecuente
+La función actualizar_frecuencia:
+=== Mini Cloud Log Analyzer ===
+Éxitos 2xx: <cantidad>
+Errores 4xx: <cantidad>
+Errores 5xx: <cantidad>
+Código más frecuente: <código>
