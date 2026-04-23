@@ -10,6 +10,9 @@ Práctica universitaria orientada a estudiantes principiantes para reforzar fund
 - y flujo de trabajo con **GitHub Classroom**.
 
 ---
+## Asciinema
+https://asciinema.org/a/Oy7hsLjPuRe9GuGD
+
 # Mini Cloud Log Analyzer - ARM64 Assembly
 
 ## 📋 Descripción
@@ -34,17 +37,6 @@ El programa utiliza únicamente syscalls directas sin intermediarios:
 | `exit`  | 93     | Terminar el programa |
 
 ### 2. Estructura de Memoria
-.bss (datos no inicializados)
-├── buffer[4096] - Buffer circular para lectura por bloques
-└── num_buf[32] - Buffer para conversión entero→string
-
-.data (datos inicializados)
-├── msg_titulo - "=== Mini Cloud Log Analyzer ===\n"
-├── msg_2xx - "Éxitos 2xx: "
-├── msg_4xx - "Errores 4xx: "
-├── msg_5xx - "Errores 5xx: "
-├── msg_codigo_frec - "Código más frecuente: "
-└── msg_fin_linea - "\n"
 
 
 ### 3. Registros Utilizados
